@@ -6,4 +6,4 @@ if 'ssarusi' in getcwd():
 elif 'add_yours' in getcwd():
     git_path = 'add_yours'
 
-data_path = join(git_path, 'Knowledge_graph', 'Imported_data')
+data_path = join(git_path, 'Heuristic_Search', 'Data')
