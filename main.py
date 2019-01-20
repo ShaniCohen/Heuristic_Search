@@ -1,46 +1,84 @@
 # https://github.com/ChristopherKing42/15puzzleSolver/blob/master/puzzle.py
 import config as c
 from bloom_filter_se import BloomFilter
-from algo import Astar
+from algo import Astar, speedy
 from utils import eval_pos, display
 import sys
 import os
+import pandas as pd
 from os.path import join
 
 
+def run_Astar(puzzle, epsilon, bloom=None):
+    # start_tree = list of (pos, g, f, solution)
+    start_tree = [(puzzle, 0, eval_pos(board=puzzle, pathlength=0, e=epsilon), [])]
+    closed_list = set()
+
+    # count - number of nodes inserted to closed list / bloom
+    # count_seen - number of nodes "seen" in closed list / bloom --> nodes which were already visited
+    best_node, count, count_seen, evaluated = Astar(tree=start_tree, old=closed_list, epsilon=epsilon, bloom=bloom)
+    while best_node[0] != c.WIN:
+        print(best_node)
+        best_node, count, count_seen, evaluated = Astar(tree=start_tree, old=closed_list, epsilon=epsilon, bloom=bloom,
+                                                        count=count, count_seen=count_seen, evaluated=evaluated)
+    print('Solution:', '\n', best_node)
+    if bloom:
+        return best_node, count, count_seen, evaluated, bloom
+    else:
+        return best_node, count, count_seen, evaluated, closed_list
+
+
+def run_speedy(puzzle, epsilon, bloom=None):
+    # start_tree = list of (pos, g, h, solution)
+    start_tree = [(puzzle, 0, eval_pos(board=puzzle, pathlength=0, e=epsilon), [])]
+    closed_list = set()
+
+    # count - number of nodes inserted to closed list / bloom
+    # count_seen - number of nodes "seen" in closed list / bloom --> nodes which were already visited
+    best_node, count, count_seen, evaluated = speedy(tree=start_tree, old=closed_list, epsilon=epsilon, bloom=bloom)
+    while best_node[0] != c.WIN:
+        print(best_node)
+        best_node, count, count_seen, evaluated = speedy(tree=start_tree, old=closed_list, epsilon=epsilon, bloom=bloom,
+                                                         count=count, count_seen=count_seen, evaluated=evaluated)
+    print('Solution:', '\n', best_node)
+    if bloom:
+        return best_node, count, count_seen, evaluated, bloom
+    else:
+        return best_node, count, count_seen, evaluated, closed_list
+
+
 def mainloop(conf):
+    cols = ['puzzle_idx', 'algorithm', 'size_bloom_array', 'size_bloom_hash', 'size_bloom_all']
+    results = pd.DataFrame(columns=cols)
+
     for puzzle in c.PUZZLES:
         # generate a bloom filter
-        bloom = BloomFilter(max_elements=conf['max_elements'], error_rate=conf['error_rate'],
-                            array_size=conf['array_size'], hash_size=conf['hash_size'])
-        start_0, start_1 = [(puzzle, 0, eval_pos(board=puzzle, pathlength=0, e=conf['epsilon']), [])], set()
-
-        print(sys.getsizeof(start_1))
-        print(sys.getsizeof(bloom))
-        count_seen = 0
-        # count- כמות קודקודים שמכניסים לרשימה הסגורה
-        count = 0
-        count_seen_bloom = 0
-        x = 1000
+        bloom = BloomFilter(max_elements=conf['max_elements'], error_rate=conf['error_rate'])
+        # num_bits_bloom = bloom.num_bits_m
 
         # run A-star
-        best_node, _, count, count_seen_bloom = Astar(tree=start_0, old=start_1, epsilon=conf['epsilon'], count=count,
-                                                      count_seen_bloom=count_seen_bloom, bloom=bloom)
-        while best_node[0] != c.WIN:
-            if x == 1000:
-                display(best_node[0])
-                print(best_node[1])
-                x = 0
-            # calling Astar
-            best_node, count_seen, count, count_seen_bloom = Astar(tree=start_0, old=start_1, epsilon=conf['epsilon'],
-                                                                   count=count, count_seen_bloom=count_seen_bloom,
-                                                                   bloom=bloom)
-            print(best_node)
-            x += 1
-        print(best_node)
-        print(f"count: {count}, count_seen: {count_seen}, count_seen_bloom: {count_seen_bloom}")
-        print('size of the close list: ', sys.getsizeof(start_1))
-        print('size of the close bloom list: ', conf['array_size'])
+        sol, count, count_seen, evaluated, closed_lst = run_Astar(puzzle=puzzle, epsilon=conf['epsilon'])
+        # run Astar with bloom
+        sol_b, count_b, count_seen_b, evaluated_b, bloom = run_Astar(puzzle=puzzle, epsilon=conf['epsilon'],
+                                                                     bloom=bloom)
+        # run speedy
+        sol, count, count_seen, evaluated, closed_lst = run_speedy(puzzle=puzzle, epsilon=conf['epsilon'])
+        # run speedy with bloom
+        sol_b, count_b, count_seen_b, evaluated_b, bloom = run_speedy(puzzle=puzzle, epsilon=conf['epsilon'],
+                                                                      bloom=bloom)
+
+        print(f"count: {count}, count_seen: {count_seen}, evaluated: {evaluated}")
+        print(f"count_b: {count_b}, count_seen_b: {count_seen_b}, evaluated_b: {evaluated_b}")
+        # # compare memory size
+        # size_bloom_array = sys.getsizeof(bloom)  # Return the size of an object in bytes
+        # size_bloom_hash = sys.getsizeof(bloom.probe_bitnoer)
+        # size_bloom_all = size_bloom_array + size_bloom_hash
+        # closed_list_size = sys.getsizeof(closed_list)
+
+        print(f"len of closed_list: {len(closed_lst)}")
+        print('size of the close list: ', sys.getsizeof(closed_lst))
+        print('size of the close bloom list (all): ', sys.getsizeof(bloom))
+        # print('size of bloom (bits): ', bloom.num_bits_m)
         print('number of hash: ', bloom.num_probes_k)
         print('size of hash: ', sys.getsizeof(bloom.probe_bitnoer))
 
