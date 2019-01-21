@@ -96,12 +96,12 @@ def mainloop(conf):
         #####  A-star  #####
         bloom = BloomFilter(max_elements=conf['max_elements'], error_rate=conf['error_rate'])
         s_bloom = BloomFilter(max_elements=conf['max_elements'], error_rate=conf['error_rate'])
-        print('run A-star')
+        print('A-star')
         sol, count_seen, evaluated, closed_lst = run_Astar(conf=conf, puzzle=puzzle, epsilon=conf['epsilon'])
-        print('run Astar with bloom')
+        print('Astar with bloom')
         sol_b, count_seen_b, evaluated_b, bloom = run_Astar(conf=conf, puzzle=puzzle, epsilon=conf['epsilon'],
                                                             bloom=bloom, smart=False)
-        print('run Astar with smart bloom')
+        print('Astar with smart bloom')
         sol_sb, count_seen_sb, evaluated_sb, s_bloom = run_Astar(conf=conf, puzzle=puzzle, epsilon=conf['epsilon'],
                                                                  bloom=s_bloom, smart=True)
         results = update_results(results=results, puzzle_idx=idx, algo='Astar', sol=sol, sol_b=sol_b, sol_sb=sol_sb,
@@ -111,12 +111,12 @@ def mainloop(conf):
         #####  Speedy  #####
         bloom = BloomFilter(max_elements=conf['max_elements'], error_rate=conf['error_rate'])
         s_bloom = BloomFilter(max_elements=conf['max_elements'], error_rate=conf['error_rate'])
-        print('run speedy')
+        print('Speedy')
         sol, count_seen, evaluated, closed_lst = run_speedy(conf=conf, puzzle=puzzle, epsilon=conf['epsilon'])
-        print('run speedy with bloom')
+        print('Speedy with bloom')
         sol_b, count_seen_b, evaluated_b, bloom = run_speedy(conf=conf, puzzle=puzzle, epsilon=conf['epsilon'],
                                                              bloom=bloom, smart=False)
-        print('run speedy with smart bloom')
+        print('Speedy with smart bloom')
         sol_sb, count_seen_sb, evaluated_sb, s_bloom = run_speedy(conf=conf,puzzle=puzzle, epsilon=conf['epsilon'],
                                                                   bloom=s_bloom, smart=True)
         results = update_results(results=results, puzzle_idx=idx, algo='Speedy', sol=sol, sol_b=sol_b, sol_sb=sol_sb,
