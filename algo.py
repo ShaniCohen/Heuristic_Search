@@ -27,10 +27,10 @@ def Astar(tree, old, epsilon, bloom=None, count=0, count_seen=0, evaluated=1):
     # add best_node to closed list OR bloom
     if bloom:
         bloom.add(str(best_node[0]))
-    # old.add(best_node[0])
-    else:
-        old.add(best_node[0])
-    count += 1
+    old.add(best_node[0])
+    # else:
+    #     old.add(best_node[0])
+    # count += 1
 
     # update board position
     new_poss = moves(position=best_node[0])
@@ -65,10 +65,10 @@ def speedy(tree, old, epsilon, bloom=None, count=0, count_seen=0, evaluated=1):
     # add best_node to closed list OR bloom
     if bloom:
         bloom.add(str(best_node[0]))
-    # old.add(best_node[0])
-    else:
-        old.add(best_node[0])
-    count += 1
+    old.add(best_node[0])
+    # else:
+    #     old.add(best_node[0])
+    # count += 1
 
     # update board position
     new_poss = moves(position=best_node[0])

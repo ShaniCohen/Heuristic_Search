@@ -4,7 +4,6 @@ from bloom_filter_se import BloomFilter
 from algo import Astar, speedy
 from utils import eval_pos
 import sys
-import os
 import pandas as pd
 from os.path import join
 
@@ -69,7 +68,10 @@ def update_results(results, puzzle_idx, algo, sol, sol_b, evaluated, evaluated_b
 
 
 def mainloop(conf):
-    results = pd.DataFrame()
+    cols = ['puzzle_idx', 'algorithm', 'reg_sol_quality', 'bloom_sol_quality', 'reg_evaluated', 'bloom_evaluated',
+            'reg_closed_lst_size', 'reg_closed_lst_len', 'bloom_array_size', 'bloom_hash_size', 'bloom_size_all',
+            'num_hash']
+    results = pd.DataFrame(columns=cols)
     for idx, puzzle in enumerate(c.PUZZLES):
         #####  A-star  #####
         bloom = BloomFilter(max_elements=conf['max_elements'], error_rate=conf['error_rate'])
