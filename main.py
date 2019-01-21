@@ -117,7 +117,7 @@ def mainloop(conf):
                                                              bloom=bloom, smart=False)
         print('Speedy with smart bloom')
         s_bloom = BloomFilter(max_elements=conf['max_elements'], error_rate=conf['error_rate'])
-        sol_sb, count_seen_sb, evaluated_sb, s_bloom = run_speedy(conf=conf,puzzle=puzzle, epsilon=conf['epsilon'],
+        sol_sb, count_seen_sb, evaluated_sb, s_bloom = run_speedy(conf=conf, puzzle=puzzle, epsilon=conf['epsilon'],
                                                                   bloom=s_bloom, smart=True)
         results = update_results(results=results, puzzle_idx=idx, algo='Speedy', sol=sol, sol_b=sol_b, sol_sb=sol_sb,
                                  evaluated=evaluated, evaluated_b=evaluated_b, evaluated_sb=evaluated_sb,
