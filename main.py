@@ -94,14 +94,14 @@ def mainloop(conf):
     results = pd.DataFrame(columns=cols)
     for idx, puzzle in enumerate(c.PUZZLES):
         #####  A-star  #####
-        bloom = BloomFilter(max_elements=conf['max_elements'], error_rate=conf['error_rate'])
-        s_bloom = BloomFilter(max_elements=conf['max_elements'], error_rate=conf['error_rate'])
         print('A-star')
         sol, count_seen, evaluated, closed_lst = run_Astar(conf=conf, puzzle=puzzle, epsilon=conf['epsilon'])
         print('Astar with bloom')
+        bloom = BloomFilter(max_elements=conf['max_elements'], error_rate=conf['error_rate'])
         sol_b, count_seen_b, evaluated_b, bloom = run_Astar(conf=conf, puzzle=puzzle, epsilon=conf['epsilon'],
                                                             bloom=bloom, smart=False)
         print('Astar with smart bloom')
+        s_bloom = BloomFilter(max_elements=conf['max_elements'], error_rate=conf['error_rate'])
         sol_sb, count_seen_sb, evaluated_sb, s_bloom = run_Astar(conf=conf, puzzle=puzzle, epsilon=conf['epsilon'],
                                                                  bloom=s_bloom, smart=True)
         results = update_results(results=results, puzzle_idx=idx, algo='Astar', sol=sol, sol_b=sol_b, sol_sb=sol_sb,
@@ -109,14 +109,14 @@ def mainloop(conf):
                                  closed_lst=closed_lst, bloom=bloom, s_bloom=s_bloom,
                                  count_seen=count_seen, count_seen_b=count_seen_b, count_seen_sb=count_seen_sb)
         #####  Speedy  #####
-        bloom = BloomFilter(max_elements=conf['max_elements'], error_rate=conf['error_rate'])
-        s_bloom = BloomFilter(max_elements=conf['max_elements'], error_rate=conf['error_rate'])
         print('Speedy')
         sol, count_seen, evaluated, closed_lst = run_speedy(conf=conf, puzzle=puzzle, epsilon=conf['epsilon'])
         print('Speedy with bloom')
+        bloom = BloomFilter(max_elements=conf['max_elements'], error_rate=conf['error_rate'])
         sol_b, count_seen_b, evaluated_b, bloom = run_speedy(conf=conf, puzzle=puzzle, epsilon=conf['epsilon'],
                                                              bloom=bloom, smart=False)
         print('Speedy with smart bloom')
+        s_bloom = BloomFilter(max_elements=conf['max_elements'], error_rate=conf['error_rate'])
         sol_sb, count_seen_sb, evaluated_sb, s_bloom = run_speedy(conf=conf,puzzle=puzzle, epsilon=conf['epsilon'],
                                                                   bloom=s_bloom, smart=True)
         results = update_results(results=results, puzzle_idx=idx, algo='Speedy', sol=sol, sol_b=sol_b, sol_sb=sol_sb,
