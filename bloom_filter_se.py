@@ -505,17 +505,18 @@ def try_unlink(filename):
 class BloomFilter(object):
     """Probabilistic set membership testing for large sets"""
     def __init__(self,
-                 array_size = 1000,
-                 hash_size = 4,
+                 # array_size=1000,  # number of bits
                  max_elements=10000,
                  error_rate=0.1,
-                 probe_bitnoer=get_bitno_lin_comb,
+                 probe_bitnoer=get_bitno_lin_comb,  # calculates and generates the hash functions
                  filename=None,
                  start_fresh=False):
         # pylint: disable=R0913
         # R0913: We want a few arguments
         if max_elements <= 0:
             raise ValueError('ideal_num_elements_n must be > 0')
+        # if array_size <= 0:
+        #     raise ValueError('array_size must be > 0')
         if not (0 < error_rate < 1):
             raise ValueError('error_rate_p must be between 0 and 1 exclusive')
 
@@ -526,8 +527,13 @@ class BloomFilter(object):
 
         numerator = -1 * self.ideal_num_elements_n * math.log(self.error_rate_p)
         denominator = math.log(2) ** 2
-        real_num_bits_m = numerator / denominator
-        self.num_bits_m = array_size#int(math.ceil(real_num_bits_m))
+        real_num_bits_m = numerator / denominator  # calc array size (bits)
+        self.num_bits_m = int(math.ceil(real_num_bits_m))
+        # self.num_bits_m = array_size
+
+        # num_bits = [-1 * num_elements * log(error_rate)] / math.log(2) ** 2
+        # num_elements = num_bits * math.log(2) ** 2 / (-1 * log(error_rate))
+        # self.ideal_num_elements_n = self.num_bits_m * denominator / (-1 * math.log(self.error_rate_p))
 
         if filename is None:
             self.backend = Array_backend(self.num_bits_m)
@@ -545,11 +551,10 @@ class BloomFilter(object):
 
         # AKA num_offsetters
         # Verified against http://en.wikipedia.org/wiki/Bloom_filter#Probability_of_false_positives
-        real_num_probes_k = (self.num_bits_m / self.ideal_num_elements_n) * math.log(2)# number of hash tables
-        self.num_probes_k = hash_size#
-        #self.num_probes_k = int(math.ceil(real_num_probes_k))
+        real_num_probes_k = (self.num_bits_m / self.ideal_num_elements_n) * math.log(2)  # number of hash tables
+        self.num_probes_k = int(math.ceil(real_num_probes_k))
+        # self.num_probes_k = hash_size
         self.probe_bitnoer = probe_bitnoer
-
 
     def __repr__(self):
         return 'BloomFilter(ideal_num_elements_n=%d, error_rate_p=%f, num_bits_m=%d)' % (
