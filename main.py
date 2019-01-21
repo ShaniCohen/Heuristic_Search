@@ -2,7 +2,7 @@
 import config as c
 from bloom_filter_se import BloomFilter
 from algo import Astar, speedy
-from utils import eval_pos, display
+from utils import eval_pos
 import sys
 import os
 import pandas as pd
@@ -47,46 +47,52 @@ def run_speedy(puzzle, epsilon, bloom=None):
         return best_node, count, count_seen, evaluated, closed_list
 
 
+def update_results(results, puzzle_idx, algo, sol, sol_b, evaluated, evaluated_b, closed_lst, bloom):
+    to_save = {'puzzle_idx': puzzle_idx,
+               'algorithm': algo,
+               'reg_sol_quality': len(sol[3]),  # solution quality
+               'bloom_sol_quality': len(sol_b[3]),
+               'reg_evaluated': evaluated,  # run time
+               'bloom_evaluated': evaluated_b,
+               'reg_closed_lst_size': sys.getsizeof(closed_lst),  # memory 1
+               'reg_closed_lst_len': len(closed_lst),  # memory 2
+               'bloom_array_size': sys.getsizeof(bloom),
+               'bloom_hash_size': sys.getsizeof(bloom.probe_bitnoer),
+               'bloom_size_all': sys.getsizeof(bloom) + sys.getsizeof(bloom.probe_bitnoer),
+               'num_hash': bloom.num_probes_k}
+               # bloom.num_bits_m
+    results = results.append(to_save, ignore_index=True)
+    for k, v in to_save.items():
+        print(f"{k}: {v}")
+    print()
+    return results
+
+
 def mainloop(conf):
-    cols = ['puzzle_idx', 'algorithm', 'size_bloom_array', 'size_bloom_hash', 'size_bloom_all']
-    results = pd.DataFrame(columns=cols)
-
-    for puzzle in c.PUZZLES:
-        # generate a bloom filter
+    results = pd.DataFrame()
+    for idx, puzzle in enumerate(c.PUZZLES):
+        #####  A-star  #####
         bloom = BloomFilter(max_elements=conf['max_elements'], error_rate=conf['error_rate'])
-        # num_bits_bloom = bloom.num_bits_m
-
         # run A-star
         sol, count, count_seen, evaluated, closed_lst = run_Astar(puzzle=puzzle, epsilon=conf['epsilon'])
         # run Astar with bloom
         sol_b, count_b, count_seen_b, evaluated_b, bloom = run_Astar(puzzle=puzzle, epsilon=conf['epsilon'],
                                                                      bloom=bloom)
+        results = update_results(results=results, puzzle_idx=idx, algo='Astar', sol=sol, sol_b=sol_b,
+                                 evaluated=evaluated, evaluated_b=evaluated_b, closed_lst=closed_lst, bloom=bloom)
+        #####  Speedy  #####
+        bloom = BloomFilter(max_elements=conf['max_elements'], error_rate=conf['error_rate'])
         # run speedy
         sol, count, count_seen, evaluated, closed_lst = run_speedy(puzzle=puzzle, epsilon=conf['epsilon'])
         # run speedy with bloom
         sol_b, count_b, count_seen_b, evaluated_b, bloom = run_speedy(puzzle=puzzle, epsilon=conf['epsilon'],
                                                                       bloom=bloom)
-
-        print(f"count: {count}, count_seen: {count_seen}, evaluated: {evaluated}")
-        print(f"count_b: {count_b}, count_seen_b: {count_seen_b}, evaluated_b: {evaluated_b}")
-        # # compare memory size
-        # size_bloom_array = sys.getsizeof(bloom)  # Return the size of an object in bytes
-        # size_bloom_hash = sys.getsizeof(bloom.probe_bitnoer)
-        # size_bloom_all = size_bloom_array + size_bloom_hash
-        # closed_list_size = sys.getsizeof(closed_list)
-
-        print(f"len of closed_list: {len(closed_lst)}")
-        print('size of the close list: ', sys.getsizeof(closed_lst))
-        print('size of the close bloom list (all): ', sys.getsizeof(bloom))
-        # print('size of bloom (bits): ', bloom.num_bits_m)
-        print('number of hash: ', bloom.num_probes_k)
-        print('size of hash: ', sys.getsizeof(bloom.probe_bitnoer))
+        results = update_results(results=results, puzzle_idx=idx, algo='Speedy', sol=sol, sol_b=sol_b,
+                                 evaluated=evaluated, evaluated_b=evaluated_b, closed_lst=closed_lst, bloom=bloom)
+    results.to_csv(join(c.output_path, f"results_conf_{conf['idx']}.csv"), index=False)
 
 
 for configuration in c.CONFIGURATIONS:
     print(f"Configuration = {configuration['idx']}\n")
-    # generate directory if not exist
-    if not os.path.exists(join(c.output_path, 'conf_' + str(configuration['idx']))):
-        os.makedirs(join(c.output_path, 'conf_' + str(configuration['idx'])))
     mainloop(conf=configuration)
 
