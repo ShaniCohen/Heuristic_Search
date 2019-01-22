@@ -21,17 +21,25 @@ def run_Astar(conf, puzzle, epsilon, bloom=None, smart=False):
 
     # count - number of nodes inserted to closed list / bloom
     # count_seen - number of nodes "seen" in closed list / bloom --> nodes which were already visited
-    best_node, count_seen, evaluated = Astar(conf=conf, tree=start_tree, old=closed_list, epsilon=epsilon, bloom=bloom,
+    best_node, count_seen, evaluated, close_size = Astar(conf=conf, tree=start_tree, old=closed_list, epsilon=epsilon, bloom=bloom,
                                              smart=smart)
+    i=0
     while best_node[0] != c.WIN:
         # print(best_node)
-        best_node, count_seen, evaluated = Astar(conf=conf, tree=start_tree, old=closed_list, epsilon=epsilon,
+        best_node, count_seen, evaluated, close_size = Astar(conf=conf, tree=start_tree, old=closed_list, epsilon=epsilon,
                                                  bloom=bloom, smart=smart, count_seen=count_seen, evaluated=evaluated)
+        if best_node[0] =='-1':
+            break
+        if (smart and i>10000):
+            best_node =('-1', '-1', '-1', '')
+            break
+        i+=1
+
     print('Solution:', '\n', best_node)
     if bloom:
-        return best_node, count_seen, evaluated, bloom
+        return best_node, count_seen, evaluated, bloom, close_size
     else:
-        return best_node, count_seen, evaluated, closed_list
+        return best_node, count_seen, evaluated, closed_list, close_size
 
 
 def run_speedy(conf, puzzle, epsilon, bloom=None, smart=False):
@@ -41,21 +49,29 @@ def run_speedy(conf, puzzle, epsilon, bloom=None, smart=False):
 
     # count - number of nodes inserted to closed list / bloom
     # count_seen - number of nodes "seen" in closed list / bloom --> nodes which were already visited
-    best_node, count_seen, evaluated = speedy(conf=conf, tree=start_tree, old=closed_list, epsilon=epsilon, bloom=bloom,
+    best_node, count_seen, evaluated, close_size = speedy(conf=conf, tree=start_tree, old=closed_list, epsilon=epsilon, bloom=bloom,
                                               smart=smart)
+    i=0
     while best_node[0] != c.WIN:
         # print(best_node)
-        best_node,  count_seen, evaluated = speedy(conf=conf, tree=start_tree, old=closed_list, epsilon=epsilon,
+        best_node,  count_seen, evaluated, close_size = speedy(conf=conf, tree=start_tree, old=closed_list, epsilon=epsilon,
                                                    bloom=bloom, smart=smart, count_seen=count_seen, evaluated=evaluated)
+        if best_node[0] =='-1':
+            break
+        if (smart and i>10000):
+            best_node =('-1', '-1', '-1', '')
+            break
+        i+=1
+
     print('Solution:', '\n', best_node)
     if bloom:
-        return best_node,  count_seen, evaluated, bloom
+        return best_node,  count_seen, evaluated, bloom, close_size
     else:
-        return best_node,  count_seen, evaluated, closed_list
+        return best_node,  count_seen, evaluated, closed_list, close_size
 
 
 def update_results(results, puzzle_idx, algo, sol, sol_b, sol_sb, evaluated, evaluated_b, evaluated_sb, closed_lst,
-                   bloom, s_bloom, count_seen, count_seen_b, count_seen_sb):
+                   bloom, s_bloom, count_seen, count_seen_b, count_seen_sb, close_size,close_size_b,close_size_sb):
     to_save = {'puzzle_idx': puzzle_idx,
                'algorithm': algo,
                'reg_sol_quality': len(sol[3]),  # solution quality
@@ -76,7 +92,10 @@ def update_results(results, puzzle_idx, algo, sol, sol_b, sol_sb, evaluated, eva
                'smart_bloom_array_size': sys.getsizeof(s_bloom),
                'smart_bloom_hash_size': sys.getsizeof(s_bloom.probe_bitnoer),
                'smart_bloom_size_all': sys.getsizeof(s_bloom) + sys.getsizeof(s_bloom.probe_bitnoer),
-               'smart_bloom_num_hash': s_bloom.num_probes_k}
+               'smart_bloom_num_hash': s_bloom.num_probes_k,
+               'close_size_list': close_size,
+               'close_size_list_bloom': close_size_b,
+               'close_size_list_smart_bloom': close_size_sb}
                # bloom.num_bits_m
     results = results.append(to_save, ignore_index=True)
     for k, v in to_save.items():
@@ -95,34 +114,36 @@ def mainloop(conf):
     for idx, puzzle in enumerate(c.PUZZLES):
         #####  A-star  #####
         print('A-star')
-        sol, count_seen, evaluated, closed_lst = run_Astar(conf=conf, puzzle=puzzle, epsilon=conf['epsilon'])
+        sol, count_seen, evaluated, closed_lst, close_size = run_Astar(conf=conf, puzzle=puzzle, epsilon=conf['epsilon'])
         print('Astar with bloom')
         bloom = BloomFilter(max_elements=conf['max_elements'], error_rate=conf['error_rate'])
-        sol_b, count_seen_b, evaluated_b, bloom = run_Astar(conf=conf, puzzle=puzzle, epsilon=conf['epsilon'],
+        sol_b, count_seen_b, evaluated_b, bloom, close_size_b = run_Astar(conf=conf, puzzle=puzzle, epsilon=conf['epsilon'],
                                                             bloom=bloom, smart=False)
         print('Astar with smart bloom')
         s_bloom = BloomFilter(max_elements=conf['max_elements'], error_rate=conf['error_rate'])
-        sol_sb, count_seen_sb, evaluated_sb, s_bloom = run_Astar(conf=conf, puzzle=puzzle, epsilon=conf['epsilon'],
+        sol_sb, count_seen_sb, evaluated_sb, s_bloom, close_size_sb = run_Astar(conf=conf, puzzle=puzzle, epsilon=conf['epsilon'],
                                                                  bloom=s_bloom, smart=True)
         results = update_results(results=results, puzzle_idx=idx, algo='Astar', sol=sol, sol_b=sol_b, sol_sb=sol_sb,
                                  evaluated=evaluated, evaluated_b=evaluated_b, evaluated_sb=evaluated_sb,
                                  closed_lst=closed_lst, bloom=bloom, s_bloom=s_bloom,
-                                 count_seen=count_seen, count_seen_b=count_seen_b, count_seen_sb=count_seen_sb)
+                                 count_seen=count_seen, count_seen_b=count_seen_b, count_seen_sb=count_seen_sb,
+                                 close_size=close_size,close_size_b=close_size_b,close_size_sb=close_size_sb)
         #####  Speedy  #####
         print('Speedy')
-        sol, count_seen, evaluated, closed_lst = run_speedy(conf=conf, puzzle=puzzle, epsilon=conf['epsilon'])
+        sol, count_seen, evaluated, closed_lst, close_size = run_speedy(conf=conf, puzzle=puzzle, epsilon=conf['epsilon'])
         print('Speedy with bloom')
         bloom = BloomFilter(max_elements=conf['max_elements'], error_rate=conf['error_rate'])
-        sol_b, count_seen_b, evaluated_b, bloom = run_speedy(conf=conf, puzzle=puzzle, epsilon=conf['epsilon'],
+        sol_b, count_seen_b, evaluated_b, bloom, close_size_b = run_speedy(conf=conf, puzzle=puzzle, epsilon=conf['epsilon'],
                                                              bloom=bloom, smart=False)
         print('Speedy with smart bloom')
         s_bloom = BloomFilter(max_elements=conf['max_elements'], error_rate=conf['error_rate'])
-        sol_sb, count_seen_sb, evaluated_sb, s_bloom = run_speedy(conf=conf, puzzle=puzzle, epsilon=conf['epsilon'],
+        sol_sb, count_seen_sb, evaluated_sb, s_bloom, close_size_sb = run_speedy(conf=conf, puzzle=puzzle, epsilon=conf['epsilon'],
                                                                   bloom=s_bloom, smart=True)
         results = update_results(results=results, puzzle_idx=idx, algo='Speedy', sol=sol, sol_b=sol_b, sol_sb=sol_sb,
                                  evaluated=evaluated, evaluated_b=evaluated_b, evaluated_sb=evaluated_sb,
                                  closed_lst=closed_lst, bloom=bloom, s_bloom=s_bloom,
-                                 count_seen=count_seen, count_seen_b=count_seen_b, count_seen_sb=count_seen_sb)
+                                 count_seen=count_seen, count_seen_b=count_seen_b, count_seen_sb=count_seen_sb,
+                                 close_size=close_size,close_size_b=close_size_b,close_size_sb=close_size_sb)
     results.to_csv(join(c.output_path, f"results_conf_{conf['idx']}.csv"), index=False)
 
 

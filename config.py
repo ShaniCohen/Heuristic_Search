@@ -5,8 +5,8 @@ from os import getcwd
 
 if 'ssarusi' in getcwd():
     git_path = join('C:', sep, 'Users', 'ssarusi', 'git')
-elif 'add_yours' in getcwd():
-    git_path = 'add_yours'
+elif 'ebolless' in getcwd():
+    git_path = '/Users/ebolless/Documents/GIT/Advanced Search/'
 
 output_path = join(git_path, 'Heuristic_Search', 'outputs_hs')
 
