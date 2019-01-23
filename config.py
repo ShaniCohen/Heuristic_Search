@@ -7,6 +7,8 @@ if 'ssarusi' in getcwd():
     git_path = join('C:', sep, 'Users', 'ssarusi', 'git')
 elif 'ebolless' in getcwd():
     git_path = '/Users/ebolless/Documents/GIT/Advanced Search/'
+elif 'content' in getcwd():
+    git_path = '/content/drive/My Drive/'
 
 output_path = join(git_path, 'Heuristic_Search', 'outputs_hs')
 
